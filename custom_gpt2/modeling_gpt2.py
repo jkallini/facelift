@@ -40,9 +40,9 @@ from transformers.utils.deprecation import deprecate_kwarg
 from transformers.utils.model_parallel_utils import assert_device_map, get_device_map
 from .configuration_gpt2 import GPT2Config
 
-from custom.rope import RotaryPosEncoding
-from custom.geometric_attention import gatt
-from custom.alibi import get_relative_positions, get_alibi_slope
+from ..custom.rope import RotaryPosEncoding
+from ..custom.geometric_attention import gatt
+from ..custom.alibi import get_relative_positions, get_alibi_slope
 
 
 logger = logging.get_logger(__name__)

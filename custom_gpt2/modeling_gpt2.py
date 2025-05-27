@@ -211,6 +211,7 @@ class GPT2Attention(nn.Module):
 
         ### NEW CODE ###
         if getattr(self.config, "alibi", False):
+            self.alibi_scale = getattr(self.config, "alibi_scale", 1.0)
             self.register_buffer("alibi_m", get_alibi_slope(self.num_heads))
 
         if getattr(self.config, "rope", False):
@@ -276,7 +277,7 @@ class GPT2Attention(nn.Module):
         #### NEW CODE ####
         if getattr(self.config, "alibi", False):
             seq_len = attn_weights.size(-1)
-            alibi_bias = (self.m * get_relative_positions(seq_len)).unsqueeze(0)
+            alibi_bias = (self.alibi_scale * self.m * get_relative_positions(seq_len)).unsqueeze(0)
             attn_weights = attn_weights + alibi_bias
             
         if getattr(self.config, "geometric_attention", False):

@@ -140,7 +140,7 @@ def eager_attention_forward(module, query, key, value, attention_mask, head_mask
     # Apply ALiBi bias if configured
     if getattr(module.config, "alibi", False):
         seq_len = attn_weights.size(-1)
-        alibi_bias = (module.alibi_m * get_relative_positions(seq_len).to(attn_weights.device)).unsqueeze(0)
+        alibi_bias = (module.alibi_scale * module.alibi_m * get_relative_positions(seq_len).to(attn_weights.device)).unsqueeze(0)
         attn_weights = attn_weights + alibi_bias
     
     # Apply Geometric Attention if configured
@@ -277,7 +277,7 @@ class GPT2Attention(nn.Module):
         #### NEW CODE ####
         if getattr(self.config, "alibi", False):
             seq_len = attn_weights.size(-1)
-            alibi_bias = (self.alibi_scale * self.m * get_relative_positions(seq_len)).unsqueeze(0)
+            alibi_bias = (self.alibi_scale * self.alibi_m * get_relative_positions(seq_len)).unsqueeze(0)
             attn_weights = attn_weights + alibi_bias
             
         if getattr(self.config, "geometric_attention", False):

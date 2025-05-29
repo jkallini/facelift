@@ -158,7 +158,7 @@ class GPT2Config(PretrainedConfig):
         has_positional_encodings=True,
         geometric_attention=False,
         alibi=False,
-        alibi_scale=None,
+        alibi_scale=1.0,
         rope=False,
         #### NEW CODE ####
         **kwargs,

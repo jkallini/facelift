@@ -140,7 +140,10 @@ def eager_attention_forward(module, query, key, value, attention_mask, head_mask
     # Apply ALiBi bias if configured
     if getattr(module.config, "alibi", False):
         seq_len = attn_weights.size(-1)
-        alibi_bias = (module.alibi_scale * module.alibi_m * get_relative_positions(seq_len).to(attn_weights.device)).unsqueeze(0)
+        if module.constant_alibi_slope:
+            alibi_bias = get_relative_positions(seq_len).unsqueeze(0)
+        else:
+            alibi_bias = (module.alibi_scale * module.alibi_m * get_relative_positions(seq_len).to(attn_weights.device)).unsqueeze(0)
         attn_weights = attn_weights + alibi_bias
     
     # Apply Geometric Attention if configured
@@ -212,6 +215,7 @@ class GPT2Attention(nn.Module):
         ### NEW CODE ###
         if getattr(self.config, "alibi", False):
             self.alibi_scale = getattr(self.config, "alibi_scale", 1.0)
+            self.constant_alibi_slope = getattr(self.config, "constant_alibi_slope", False)
             self.register_buffer("alibi_m", get_alibi_slope(self.num_heads))
 
         if getattr(self.config, "rope", False):
@@ -277,7 +281,10 @@ class GPT2Attention(nn.Module):
         #### NEW CODE ####
         if getattr(self.config, "alibi", False):
             seq_len = attn_weights.size(-1)
-            alibi_bias = (self.alibi_scale * self.alibi_m * get_relative_positions(seq_len)).unsqueeze(0)
+            if self.constant_alibi_slope:
+                alibi_bias = get_relative_positions(seq_len).unsqueeze(0)
+            else:
+                alibi_bias = (self.alibi_scale * self.alibi_m * get_relative_positions(seq_len)).unsqueeze(0)
             attn_weights = attn_weights + alibi_bias
             
         if getattr(self.config, "geometric_attention", False):

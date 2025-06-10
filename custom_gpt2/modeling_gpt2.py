@@ -139,11 +139,21 @@ def eager_attention_forward(module, query, key, value, attention_mask, head_mask
     #### NEW CODE ####
     # Apply ALiBi bias if configured
     if getattr(module.config, "alibi", False):
-        seq_len = attn_weights.size(-1)
+        batch_size, num_heads, tgt_len, src_len = attn_weights.size()
+        rel_pos = get_relative_positions(src_len).to(attn_weights.device)  # [seq_len, seq_len]
+
         if module.constant_alibi_slope:
-            alibi_bias = get_relative_positions(seq_len).to(attn_weights.device).unsqueeze(0).unsqueeze(0)
+            # [1, 1, src_len, src_len] - slice to match tgt_len
+            alibi_bias = rel_pos.unsqueeze(0).unsqueeze(0)  # [1, 1, src_len, src_len]
+            alibi_bias = alibi_bias[:, :, -tgt_len:, :]     # [1, 1, tgt_len, src_len]
+            alibi_bias = alibi_bias.expand(batch_size, num_heads, -1, -1)
         else:
-            alibi_bias = (module.alibi_scale * module.alibi_m * get_relative_positions(seq_len).to(attn_weights.device)).unsqueeze(0)
+            # module.alibi_m is [num_heads, 1, 1]
+            alibi_bias = module.alibi_m * rel_pos  # [num_heads, src_len, src_len]
+            alibi_bias = alibi_bias[:, -tgt_len:, :]  # [num_heads, tgt_len, src_len]
+            alibi_bias = alibi_bias.unsqueeze(0)      # [1, num_heads, tgt_len, src_len]
+            alibi_bias = alibi_bias.expand(batch_size, -1, -1, -1)
+        
         attn_weights = attn_weights + alibi_bias
     
     # Apply Geometric Attention if configured

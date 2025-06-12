@@ -159,6 +159,8 @@ class GPT2Config(PretrainedConfig):
         geometric_attention=False,
         alibi=False,
         alibi_scale=1.0,
+        alibi_offset=0,
+        constant_alibi_slope=False,
         rope=False,
         #### NEW CODE ####
         **kwargs,
@@ -192,8 +194,10 @@ class GPT2Config(PretrainedConfig):
         self.has_positional_encodings = has_positional_encodings
         self.geometric_attention = geometric_attention
         self.alibi = alibi
-        self.rope = rope
         self.alibi_scale = alibi_scale
+        self.constant_alibi_slope = constant_alibi_slope
+        self.alibi_offset = alibi_offset
+        self.rope = rope
         #### NEW CODE ####
 
         super().__init__(bos_token_id=bos_token_id, eos_token_id=eos_token_id, **kwargs)

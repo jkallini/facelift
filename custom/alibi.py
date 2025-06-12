@@ -1,9 +1,13 @@
 import torch
 
-def get_relative_positions(seq_len: int) -> torch.tensor:
+def get_relative_positions(seq_len: int, offset: int = 0) -> torch.tensor:
     x = torch.arange(seq_len)[None, :]
     y = torch.arange(seq_len)[:, None]
-    return x - y
+    diff = x - y
+
+    # Zero out the band where |i - j| < offset
+    out = torch.sign(diff) * torch.clamp(diff.abs() - offset, min=0)
+    return out
 
 
 def get_alibi_slope(num_heads):
